@@ -1,0 +1,137 @@
+<html>
+<body>
+
+<h1>My Web Page</h1>
+  <div class="coinmarketcap-currency-widget"></div>
+<script>
+const getTickerData = async () => await fetch('https://bitbns.com/order/getTickerWithVolume')
+    .then((response) => response.json())
+    .then((data) => data);
+let uidataSet = {};
+let globalConfig = {};
+
+
+const card = ({ price,
+    marketCap,
+    vol,
+    fullName,
+    code,
+    coinId,
+    coinIcon,
+    base }) => {
+    return ` <div style="border-radius: 0.5rem; border-width: 1px; border-color: #D1D5DB;">
+    <div
+        style="display: grid; padding: 1rem; align-items: center; gap: 1rem; grid-template-columns: 80px auto"
+    >
+        <img
+            src="${coinIcon}"
+            height="50px"
+            width="50px"
+            style="margin:auto 0px"
+        />
+        <div style="width: 100%;">
+            <p style="color: #3B82F6;">
+                ${fullName} <span style="text-transform: uppercase; ">(${code})</span>
+            </p>
+            <p>
+                <b>${price}</b>
+                <span style="font-size: 0.75rem; line-height: 1rem;">
+                    ${base}
+                </span>
+                <span>(-1.50%)</span>
+            </p>
+        </div>
+    </div>
+    <div style="display: grid; overflow: auto; text-align: center; border-color: #D1D5DB; grid-auto-flow: column;">
+        ${marketCap ? `<div style="padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.5rem; padding-right: 1.5rem; font-size: 1.125rem; line-height: 1.75rem; border-right-width: 1px; border-color: #D1D5DB;">
+            <p style="margin-bottom: 0.25rem; font-size: 0.875rem; line-height: 1.25rem;">MARKET CAP</p>
+            <p> ${marketCap}{" "}
+                <span style="font-size: 0.75rem; line-height: 1rem;">
+                    ${base}
+                </span></p>
+        </div>` : ''}
+        <div style="border-r border-gray-300 last:border-r-0 px-6 py-3 text-base md:text-lg">
+            <p style="margin-bottom: 0.25rem; font-size: 0.875rem; line-height: 1.25rem;">VOLUME</p>
+            <p>${vol}{" "}
+                <span style="font-size: 0.75rem; line-height: 1rem;">
+                    ${base}
+                </span>
+            </p>
+        </div>
+    </div>
+    <p style="padding: 0.5rem 0.75rem; color: #3B82F6; font-size: 0.75rem; line-height: 1rem; text-align: center;">
+        Powered by BITBNS
+    </p>
+    </div>`
+}
+
+const widget = async () => {
+    globalConfig = await fetch('https://bitbns.com/jugApi/globalConfig.json')
+        .then((response) => response.json())
+        .then((data) => data);
+
+    const countData =  document.getElementsByClassName('coinmarketcap-currency-widget');
+
+    uidataSet = [{
+        currency: "btc",
+        base: "USD",
+        secondaryCurr: "BTC",
+        ticker: "true",
+        marketcap: "true",
+        volume: "true"
+    }]
+
+    // ,
+    // {
+    //     currency: "eth",
+    //     base: "inr",
+    //     secondaryCurr: "BTC",
+    //     ticker: "fals",
+    //     marketcap: "true",
+    //     volume: "true"
+    // }
+
+    countData.map((_, index) => makeDataSet(uidataSet[index], index))
+    // id="coinmarketcap-widget-marquee" 
+    // class="coinmarketcap-currency-widget" 
+}
+
+const makeDataSet = (currData, index) => {
+    const { currency } = currData
+    const { status, data } = globalConfig[0] || {};
+    if (status === 1 && currency) {
+        const coinData = data?.coins[currency?.toLowerCase()] || {};
+        // setInterval(() => {
+        //     setTickerWidget(currData, coinData)
+        // }, 2000);
+        setTickerWidget(currData, coinData, index)
+    }
+}
+
+const setTickerWidget = async (currencyData, coinData, index) => {
+    const { currency, base } = currencyData;
+    const { coinName, coinId, coinIcon } = coinData;
+    const upperCurrency = currency.toUpperCase();
+    const tickerData = await getTickerData();
+    let USDollar = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: base,
+    });
+    const { last_traded_price, yes_price, volume: { volume: vol } } = tickerData[upperCurrency];
+    const dataSet = {
+        price: USDollar.format(last_traded_price),
+        marketCap: USDollar.format(yes_price),
+        vol,
+        fullName: coinName,
+        code: currency,
+        coinId,
+        coinIcon,
+        base,
+    }
+    document.getElementsByClassName('coinmarketcap-currency-widget')[index].innerHTML= dataSet(dataSet);
+}
+
+widget();
+</script>
+</body>
+</html>
